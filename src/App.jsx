@@ -9,6 +9,9 @@ const getDriveDirectUrl = (urlOrId, size) => {
   if (!urlOrId) return "";
   const idMatch = urlOrId.match(/[-\w]{25,}/);
   const fileId = idMatch ? idMatch[0] : urlOrId;
+  if (size === 0) {
+    return `https://lh3.googleusercontent.com/d/${fileId}=s0`;
+  }
   return size
     ? `https://lh3.googleusercontent.com/d/${fileId}=s${size}`
     : `https://lh3.googleusercontent.com/d/${fileId}`;
@@ -1009,7 +1012,7 @@ export default function App() {
             }}
           >
             <img
-              src={getDriveDirectUrl(lightbox.photos[lightbox.currentIndex])}
+              src={getDriveDirectUrl(lightbox.photos[lightbox.currentIndex], 0)}
               alt="Preview"
               style={{
                 maxWidth: "100%",
