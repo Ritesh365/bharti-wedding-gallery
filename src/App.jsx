@@ -5,12 +5,16 @@ import { RAW_HALDI_PHOTOS, RAW_WEDDING_PHOTOS } from "./constants";
 const WEB3FORMS_ACCESS_KEY = "ab8e78ed-bda9-49bc-bc3c-f75baa4ecf72";
 
 // Convert Drive IDs into reliable direct links
-const getDriveDirectUrl = (urlOrId) => {
+const getDriveDirectUrl = (urlOrId, size) => {
   if (!urlOrId) return "";
   const idMatch = urlOrId.match(/[-\w]{25,}/);
   const fileId = idMatch ? idMatch[0] : urlOrId;
-  return `https://lh3.googleusercontent.com/d/${fileId}`;
+  return size
+    ? `https://lh3.googleusercontent.com/d/${fileId}=s${size}`
+    : `https://lh3.googleusercontent.com/d/${fileId}`;
 };
+
+const getDriveThumbnailUrl = (urlOrId) => getDriveDirectUrl(urlOrId, 420);
 
 // --- FULL HALDI, MEHNDI & TILAK PHOTO ARRAY ---
 
@@ -20,14 +24,16 @@ const WEDDING_PHOTOS = RAW_WEDDING_PHOTOS.map(getDriveDirectUrl);
 // Reusable Image Item Component with Loading Skeleton and Hover Effects
 const GalleryItem = ({ url, index, isFav, toggleFavorite, openLightbox }) => {
   const [loaded, setLoaded] = useState(false);
+  const thumbUrl = getDriveThumbnailUrl(url);
 
   return (
     <div className="masonry-item" onClick={() => openLightbox(index)}>
       {!loaded && <div className="skeleton-loader" />}
       <img
-        src={url}
+        src={thumbUrl}
         alt={`Gallery ${index}`}
         loading="lazy"
+        decoding="async"
         referrerPolicy="no-referrer"
         onLoad={() => setLoaded(true)}
         style={{ opacity: loaded ? 1 : 0 }}
