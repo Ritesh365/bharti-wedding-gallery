@@ -219,6 +219,12 @@ export default function App() {
   const displayWeddingPhotos = showOnlyFavs
     ? WEDDING_PHOTOS.filter((url) => favorites.includes(url))
     : WEDDING_PHOTOS;
+  const currentPreviewPhoto = lightbox.isOpen
+    ? lightbox.photos[lightbox.currentIndex]
+    : null;
+  const isCurrentPreviewFavorite = Boolean(
+    currentPreviewPhoto && favorites.includes(currentPreviewPhoto),
+  );
 
   return (
     <div className="body-wrapper">
@@ -273,38 +279,90 @@ export default function App() {
           column-gap: 1.2rem;
           width: 100%;
         }
-        @media (max-width: 1100px) { .masonry-grid { column-count: 3; } }
-        @media (max-width: 768px) { .masonry-grid { column-count: 2; column-gap: 0.8rem; } }
-        @media (max-width: 480px) { .masonry-grid { column-count: 2; column-gap: 0.5rem; } }
+        @media (max-width: 1100px) {
+          .masonry-grid {
+            column-count: 3;
+            column-gap: 1rem;
+          }
+        }
+        @media (max-width: 768px) {
+          .masonry-grid {
+            column-count: 2;
+            column-gap: 0.8rem;
+          }
+        }
+        @media (max-width: 480px) {
+          .masonry-grid {
+            column-count: 2;
+            column-gap: 0.75rem;
+            width: 100%;
+            padding: 0;
+          }
+        }
 
         .masonry-item {
-          break-inside: avoid;
+          display: inline-block;
+          width: 100%;
+          break-inside: avoid-column;
           margin-bottom: 1.2rem;
           position: relative;
-          border-radius: 12px;
+          border-radius: 18px;
           overflow: hidden;
           cursor: pointer;
-          background: #2C221E;
-          min-height: 180px;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-          transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          background: rgba(10, 6, 4, 0.15);
+          box-shadow: 0 14px 40px rgba(0,0,0,0.14);
+          transition: transform 0.35s ease, box-shadow 0.35s ease;
+        }
+        @media (max-width: 768px) {
+          .masonry-item {
+            margin-bottom: 1rem;
+          }
+        }
+        @media (max-width: 480px) {
+          .masonry-item {
+            margin-bottom: 0.9rem;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+          }
+          .masonry-item:active {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 18px 32px rgba(0,0,0,0.18);
+            filter: saturate(1.04);
+          }
         }
 
         .masonry-item:hover {
-          transform: translateY(-8px) scale(1.02);
-          box-shadow: 0 15px 35px rgba(212, 175, 55, 0.3);
+          transform: translateY(-6px);
+          box-shadow: 0 20px 48px rgba(0,0,0,0.2);
           z-index: 10;
         }
 
         .masonry-item img {
           width: 100%;
           height: auto;
+          object-fit: cover;
           display: block;
-          transition: opacity 0.5s ease, transform 0.5s ease;
+          transition: transform 0.35s ease, opacity 0.35s ease;
+          border-radius: 18px;
+          aspect-ratio: 4 / 5;
         }
-        
+        @media (max-width: 1100px) {
+          .masonry-item img {
+            aspect-ratio: 4 / 5;
+          }
+        }
+        @media (max-width: 768px) {
+          .masonry-item img {
+            aspect-ratio: 3 / 4;
+          }
+        }
+        @media (max-width: 480px) {
+          .masonry-item img {
+            aspect-ratio: 3 / 4;
+          }
+        }
+
         .masonry-item:hover img {
-          transform: scale(1.05);
+          transform: scale(1.03);
         }
 
         .skeleton-loader {
@@ -356,6 +414,12 @@ export default function App() {
 
         .tab-content { animation: slideUpFade 0.5s ease; }
         
+        @media (max-width: 480px) {
+          .tab-content {
+            padding: 0.75rem !important;
+          }
+        }
+        
         /* Switch Toggle */
         .toggle-container {
           display: flex;
@@ -388,6 +452,18 @@ export default function App() {
           transition: 0.3s;
         }
         .toggle-switch.active::after { transform: translateX(20px); }
+
+        /* Mobile Responsive Header */
+        @media (max-width: 768px) {
+          .body-wrapper {
+            padding: 1.5rem 1rem;
+          }
+        }
+        @media (max-width: 480px) {
+          .body-wrapper {
+            padding: 1rem 0.75rem;
+          }
+        }
       `}</style>
 
       {/* TOAST NOTIFICATION */}
@@ -486,6 +562,7 @@ export default function App() {
                   outline: "none",
                   textAlign: "center",
                   background: "#FAFAFA",
+                  color: "#2C221E",
                 }}
               />
               <button
@@ -524,14 +601,17 @@ export default function App() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          boxSizing: "border-box",
+          maxWidth: "100%",
         }}
       >
         <h1
           style={{
             fontFamily: "'Great Vibes', cursive",
-            fontSize: "4rem",
+            fontSize: "clamp(2.5rem, 6vw, 4rem)",
             color: "#2C221E",
             margin: "0",
+            lineHeight: "1.2",
           }}
         >
           Nisha{" "}
@@ -539,9 +619,9 @@ export default function App() {
             style={{
               fontFamily: "'Playfair Display', serif",
               fontStyle: "italic",
-              fontSize: "2rem",
+              fontSize: "clamp(1.2rem, 3vw, 2rem)",
               color: "#AA820A",
-              margin: "0 0.5rem",
+              margin: "0 0.25rem",
             }}
           >
             weds
@@ -950,23 +1030,51 @@ export default function App() {
               <span>
                 {lightbox.currentIndex + 1} / {lightbox.photos.length}
               </span>
-              <button
-                onClick={() =>
-                  downloadPhoto(null, lightbox.photos[lightbox.currentIndex])
-                }
+              <div
                 style={{
-                  background: "#D4AF37",
-                  border: "none",
-                  color: "#111",
-                  padding: "8px 20px",
-                  borderRadius: "20px",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                  fontSize: "0.9rem",
+                  display: "flex",
+                  gap: "0.75rem",
+                  alignItems: "center",
                 }}
               >
-                Download HQ
-              </button>
+                <button
+                  onClick={(e) => {
+                    if (currentPreviewPhoto)
+                      toggleFavorite(e, currentPreviewPhoto);
+                  }}
+                  style={{
+                    background: isCurrentPreviewFavorite
+                      ? "#e74c3c"
+                      : "rgba(255,255,255,0.12)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    color: isCurrentPreviewFavorite ? "#FFF" : "#111",
+                    padding: "8px 16px",
+                    borderRadius: "20px",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  {isCurrentPreviewFavorite ? "♥ Favorited" : "♡ Favorite"}
+                </button>
+                <button
+                  onClick={() =>
+                    downloadPhoto(null, lightbox.photos[lightbox.currentIndex])
+                  }
+                  style={{
+                    background: "#D4AF37",
+                    border: "none",
+                    color: "#111",
+                    padding: "8px 20px",
+                    borderRadius: "20px",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  Download HQ
+                </button>
+              </div>
             </div>
           </div>
 
