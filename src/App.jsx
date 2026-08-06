@@ -1009,7 +1009,7 @@ export default function App() {
             }}
           >
             <img
-              src={lightbox.photos[lightbox.currentIndex]}
+              src={getDriveDirectUrl(lightbox.photos[lightbox.currentIndex])}
               alt="Preview"
               style={{
                 maxWidth: "100%",
