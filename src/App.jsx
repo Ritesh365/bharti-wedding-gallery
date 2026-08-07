@@ -3,8 +3,9 @@ import { RAW_HALDI_PHOTOS, RAW_WEDDING_PHOTOS } from "./constants";
 
 // Web3Forms Public Access Key
 const WEB3FORMS_ACCESS_KEY = "ab8e78ed-bda9-49bc-bc3c-f75baa4ecf72";
+const VISITOR_EMAIL_KEY = "wedding_visitor_email";
+const FAVORITES_STORAGE_KEY = "wedding_photo_favs";
 
-// Convert Drive IDs into reliable direct links
 const getDriveDirectUrl = (urlOrId, size) => {
   if (!urlOrId) return "";
   const idMatch = urlOrId.match(/[-\w]{25,}/);
@@ -18,6 +19,14 @@ const getDriveDirectUrl = (urlOrId, size) => {
 };
 
 const getDriveThumbnailUrl = (urlOrId) => getDriveDirectUrl(urlOrId, 420);
+
+const getDrivePreviewUrl = (urlOrId) => {
+  const width = typeof window !== "undefined" ? window.innerWidth : 1200;
+  const ratio =
+    typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+  const previewSize = Math.min(2048, Math.max(1200, Math.round(width * ratio)));
+  return getDriveDirectUrl(urlOrId, previewSize);
+};
 
 // --- FULL HALDI, MEHNDI & TILAK PHOTO ARRAY ---
 
@@ -56,9 +65,34 @@ const GalleryItem = ({ url, index, isFav, toggleFavorite, openLightbox }) => {
   );
 };
 
+const loadFavoritesForEmail = (email) => {
+  if (!email) return [];
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(FAVORITES_STORAGE_KEY) || "{}",
+    );
+    return Array.isArray(stored[email]) ? stored[email] : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveFavoritesForEmail = (email, favs) => {
+  if (!email) return;
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(FAVORITES_STORAGE_KEY) || "{}",
+    );
+    stored[email] = favs;
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(stored));
+  } catch {
+    // ignore write failures
+  }
+};
+
 export default function App() {
   const [visitorEmail, setVisitorEmail] = useState(
-    () => localStorage.getItem("wedding_visitor_email") || "",
+    () => localStorage.getItem(VISITOR_EMAIL_KEY) || "",
   );
   const [inputEmail, setInputEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,13 +100,9 @@ export default function App() {
     () => localStorage.getItem("activeTab") || "iframe-tab",
   );
 
-  const [favorites, setFavorites] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("wedding_photo_favs")) || [];
-    } catch {
-      return [];
-    }
-  });
+  const [favorites, setFavorites] = useState(() =>
+    loadFavoritesForEmail(localStorage.getItem(VISITOR_EMAIL_KEY)),
+  );
 
   const [lightbox, setLightbox] = useState({
     isOpen: false,
@@ -88,8 +118,18 @@ export default function App() {
   };
 
   useEffect(() => {
-    localStorage.setItem("wedding_photo_favs", JSON.stringify(favorites));
-  }, [favorites]);
+    if (visitorEmail) {
+      saveFavoritesForEmail(visitorEmail, favorites);
+    }
+  }, [favorites, visitorEmail]);
+
+  useEffect(() => {
+    if (visitorEmail) {
+      setFavorites(loadFavoritesForEmail(visitorEmail));
+    } else {
+      setFavorites([]);
+    }
+  }, [visitorEmail]);
 
   const exportFavoritesToTxt = () => {
     if (favorites.length === 0) {
@@ -165,16 +205,18 @@ export default function App() {
       console.log("Saved email locally.");
     }
 
-    localStorage.setItem("wedding_visitor_email", inputEmail);
+    localStorage.setItem(VISITOR_EMAIL_KEY, inputEmail);
     setVisitorEmail(inputEmail);
+    setInputEmail("");
     setIsSubmitting(false);
     triggerToast("Welcome to the gallery! ✨");
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("wedding_visitor_email");
+    localStorage.removeItem(VISITOR_EMAIL_KEY);
     setVisitorEmail("");
     setInputEmail("");
+    setFavorites([]);
     setShowOnlyFavs(false);
   };
 
@@ -1011,19 +1053,20 @@ export default function App() {
           <div
             style={{
               position: "relative",
-              maxWidth: "90vw",
-              maxHeight: "85vh",
+              width: "min(100vw - 2rem, 1200px)",
+              maxHeight: "calc(100vh - 3rem)",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
             }}
           >
             <img
-              src={getDriveDirectUrl(lightbox.photos[lightbox.currentIndex], 0)}
+              src={getDrivePreviewUrl(lightbox.photos[lightbox.currentIndex])}
               alt="Preview"
+              loading="eager"
               style={{
-                maxWidth: "100%",
-                maxHeight: "75vh",
+                width: "100%",
+                maxHeight: "calc(100vh - 220px)",
                 objectFit: "contain",
                 borderRadius: "8px",
                 boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
