@@ -650,11 +650,18 @@ export default function App() {
               background: "rgba(212, 175, 55, 0.1)",
               padding: "6px 16px",
               borderRadius: "20px",
+              flexWrap: "wrap",
+              justifyContent: "center",
             }}
           >
             <span>
               Welcome,{" "}
               <strong style={{ color: "#AA820A" }}>{visitorEmail}</strong>
+            </span>
+            <span style={{ color: "#D4AF37" }}>|</span>
+            <span>
+              Favorites selected:{" "}
+              <strong style={{ color: "#AA820A" }}>{favorites.length}</strong>
             </span>
             <span style={{ color: "#D4AF37" }}>|</span>
             <button
